@@ -1,20 +1,37 @@
 import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const goToLogin = () => {
-    window.location.hash = '#login';
+    navigate('/login', { state: { from: location } });
+    setIsSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
     setIsSidebarOpen(false);
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/');
     setIsSidebarOpen(false);
   };
 
-  const handleLinkClick = () => {
+  const handleLinkClick = (path) => {
+    if (!isAuthenticated && path !== '/') {
+      navigate('/login', { state: { from: { pathname: path } } });
+      setIsSidebarOpen(false);
+      return;
+    }
+    navigate(path);
     setIsSidebarOpen(false);
   };
 
@@ -31,9 +48,21 @@ const Navbar = () => {
         </div>
         
         <div className={styles.navActions}>
-          <div className={styles.btn}>
-            <button onClick={goToLogin}>Patient Portal →</button>
-          </div>
+          {isAuthenticated ? (
+            <>
+              <div className={styles.userInfo}>
+                <span className={styles.userName}>Welcome, {user?.name}</span>
+                <span className={styles.userRole}>({user?.role})</span>
+              </div>
+              <div className={styles.btn}>
+                <button onClick={handleLogout}>Logout</button>
+              </div>
+            </>
+          ) : (
+            <div className={styles.btn}>
+              <button onClick={goToLogin}>Login / Sign Up →</button>
+            </div>
+          )}
           
           <button 
             className={styles.menuButton}
@@ -69,16 +98,46 @@ const Navbar = () => {
         </div>
         
         <div className={styles.sidebarLinks}>
-          <a href="#find-doctor" onClick={handleLinkClick}>Find a Doctor</a>
-          <a href="#services" onClick={handleLinkClick}>Services</a>
-          <a href="#locations" onClick={handleLinkClick}>Locations</a>
-          <a href="#patients" onClick={handleLinkClick}>Patients</a>
+          <Link to="/" onClick={() => handleLinkClick('/')}>Home</Link>
+          <div onClick={() => handleLinkClick('/hospitals')} style={{ cursor: 'pointer' }}>Hospitals</div>
+          <div onClick={() => handleLinkClick('/doctor-locator')} style={{ cursor: 'pointer' }}>Find Doctors</div>
+          <div onClick={() => handleLinkClick('/medicine-ai')} style={{ cursor: 'pointer' }}>AI Medicine Suggestion</div>
+          <div onClick={() => handleLinkClick('/book-appointment')} style={{ cursor: 'pointer' }}>Book Appointment</div>
+          <div onClick={() => handleLinkClick('/emergency-services')} style={{ cursor: 'pointer' }}>🚨 Emergency Services</div>
+          <div onClick={() => handleLinkClick('/medicine-delivery')} style={{ cursor: 'pointer' }}>💊 Medicine Delivery</div>
+          {isAuthenticated && (
+            <>
+              {user?.role === 'patient' && (
+                <>
+                  <div onClick={() => handleLinkClick('/patient-dashboard')} style={{ cursor: 'pointer' }}>Patient Dashboard</div>
+                  <div onClick={() => handleLinkClick('/appointments')} style={{ cursor: 'pointer' }}>My Appointments</div>
+                  <div onClick={() => handleLinkClick('/medical-records')} style={{ cursor: 'pointer' }}>Medical Records</div>
+                </>
+              )}
+              {user?.role === 'doctor' && (
+                <>
+                  <div onClick={() => handleLinkClick('/doctor-dashboard')} style={{ cursor: 'pointer' }}>Doctor Dashboard</div>
+                  <div onClick={() => handleLinkClick('/doctor-availability')} style={{ cursor: 'pointer' }}>📅 Availability Heatmap</div>
+                  <div onClick={() => handleLinkClick('/appointments')} style={{ cursor: 'pointer' }}>My Appointments</div>
+                </>
+              )}
+              {user?.role === 'admin' && (
+                <div onClick={() => handleLinkClick('/admin-dashboard')} style={{ cursor: 'pointer' }}>Admin Dashboard</div>
+              )}
+            </>
+          )}
         </div>
         
         <div className={styles.sidebarFooter}>
-          <button className={styles.sidebarLoginButton} onClick={goToLogin}>
-            Patient Portal →
-          </button>
+          {isAuthenticated ? (
+            <button className={styles.sidebarLoginButton} onClick={handleLogout}>
+              Logout
+            </button>
+          ) : (
+            <button className={styles.sidebarLoginButton} onClick={goToLogin}>
+              Login / Sign Up →
+            </button>
+          )}
         </div>
       </div>
     </>

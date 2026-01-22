@@ -1,10 +1,10 @@
-.loginPage {
+.signupPage {
   min-height: calc(100vh - 80px);
   padding: 40px 80px 32px 80px;
   color: #ffffff;
   display: flex;
   flex-direction: column;
-  animation: loginFadeIn 0.9s ease-out both;
+  animation: signupFadeIn 0.9s ease-out both;
   transition: background 0.6s ease-out;
 }
 
@@ -29,13 +29,13 @@
   margin-right: 6px;
 }
 
-.signUpLink {
+.signInLink {
   color: #63b3ed;
   text-decoration: none;
   font-weight: 600;
 }
 
-.signUpLink:hover {
+.signInLink:hover {
   text-decoration: underline;
 }
 
@@ -206,6 +206,12 @@
   animation: formSwitch 0.25s ease-out;
 }
 
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .fieldGroup {
   display: flex;
   flex-direction: column;
@@ -237,40 +243,6 @@
   outline: none;
   border-color: #4299e1;
   box-shadow: 0 0 0 1px rgba(66, 153, 225, 0.4);
-}
-
-.optionsRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-}
-
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #cbd5e0;
-  cursor: pointer;
-}
-
-.checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #4299e1;
-}
-
-.forgotPasswordLink {
-  color: #63b3ed;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.forgotPasswordLink:hover {
-  text-decoration: underline;
 }
 
 .primaryButton {
@@ -339,6 +311,22 @@
   transform: translateY(-1px);
 }
 
+.termsText {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #718096;
+  line-height: 1.5;
+}
+
+.termsText a {
+  color: #63b3ed;
+  text-decoration: none;
+}
+
+.termsText a:hover {
+  text-decoration: underline;
+}
+
 .backHomeLink {
   display: inline-block;
   margin-top: 12px;
@@ -363,7 +351,7 @@
 
 /* Tablet */
 @media (max-width: 1024px) {
-  .loginPage {
+  .signupPage {
     padding: 40px 40px 32px 40px;
   }
   
@@ -382,7 +370,7 @@
 
 /* Small tablets */
 @media (max-width: 768px) {
-  .loginPage {
+  .signupPage {
     padding: 32px 24px 24px 24px;
   }
   
@@ -415,11 +403,15 @@
   .formCard {
     max-width: 100%;
   }
+  
+  .row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Mobile devices (Android phones) */
 @media (max-width: 480px) {
-  .loginPage {
+  .signupPage {
     padding: 24px 16px 20px 16px;
     min-height: calc(100vh - 60px);
   }
@@ -504,20 +496,6 @@
     font-size: 14px;
   }
   
-  .optionsRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .checkboxLabel {
-    font-size: 12px;
-  }
-  
-  .forgotPasswordLink {
-    font-size: 12px;
-  }
-  
   .primaryButton {
     font-size: 14px;
     padding: 11px 16px;
@@ -533,6 +511,10 @@
     padding: 9px 10px;
   }
   
+  .termsText {
+    font-size: 10px;
+  }
+  
   .backHomeLink {
     font-size: 12px;
   }
@@ -541,9 +523,13 @@
     font-size: 10px;
     margin-top: 24px;
   }
+  
+  .row {
+    grid-template-columns: 1fr;
+  }
 }
 
-@keyframes loginFadeIn {
+@keyframes signupFadeIn {
   from {
     opacity: 0;
     transform: translateY(24px);

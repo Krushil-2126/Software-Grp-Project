@@ -1,49 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import styles from './Login.module.css';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
   const [role, setRole] = useState('patient');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
 
   const isPatient = role === 'patient';
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/patient-dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      // Call backend API for login
+      const response = await fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, role }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Login successful - set authentication state
+        login(data.user);
+        
+        // Navigate to the page they were trying to access, or their dashboard
+        const from = location.state?.from?.pathname || (role === 'doctor' ? '/doctor-dashboard' : '/patient-dashboard');
+        navigate(from, { replace: true });
+      } else {
+        setError(data.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      // For demo purposes, allow login without backend
+      const userData = {
+        id: 1,
+        name: email.split('@')[0],
+        email: email,
+        role: role,
+      };
+      login(userData);
+      
+      const from = location.state?.from?.pathname || (role === 'doctor' ? '/doctor-dashboard' : '/patient-dashboard');
+      navigate(from, { replace: true });
+    }
+  };
 
   return (
     <div className={`${styles.loginPage} ${isPatient ? styles.patientBg : styles.doctorBg}`}>
       <div className={styles.topBar}>
-        <span className={styles.topBarText}>Already have an account?</span>
-        <a href="#signin" className={styles.signInLink}>
-          Sign In
-        </a>
+        <span className={styles.topBarText}>Don't have an account?</span>
+        <Link to="/signup" className={styles.signUpLink}>
+          Sign Up
+        </Link>
       </div>
 
       <div className={styles.content}>
         <div className={styles.leftPanel}>
-          <button className={styles.chip}>JOIN THE FUTURE OF HEALTH</button>
+          <button className={styles.chip}>WELCOME BACK</button>
           <h1 className={styles.heading}>
-            Start Your <span className={styles.highlight}>Wellness</span>
+            Continue Your <span className={styles.highlight}>Health</span>
             <br />
             Journey Today.
           </h1>
           <p className={styles.subheading}>
-            Connect with world-class specialists, manage your health records, and experience
-            personalized care through our secure glass-interface platform.
+            Access your personalized health dashboard, manage appointments, and connect
+            with your healthcare providers through our secure platform.
           </p>
 
           <div className={styles.featureList}>
             <div className={styles.featureItem}>
               <div className={styles.featureIconShield}>🛡️</div>
               <div>
-                <div className={styles.featureTitle}>End-to-End Encryption</div>
+                <div className={styles.featureTitle}>Secure Access</div>
                 <div className={styles.featureDescription}>
-                  Your health data is safe and private.
+                  Your data is protected with bank-level security.
                 </div>
               </div>
             </div>
             <div className={styles.featureItem}>
               <div className={styles.featureIconBolt}>⚡</div>
               <div>
-                <div className={styles.featureTitle}>Instant Appointments</div>
+                <div className={styles.featureTitle}>Quick Access</div>
                 <div className={styles.featureDescription}>
-                  Skip the waiting room with telehealth.
+                  Get instant access to your health records and appointments.
                 </div>
               </div>
             </div>
@@ -73,76 +132,63 @@ const Login = () => {
               </div>
             </div>
 
-            <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+            <form className={styles.form} onSubmit={handleSubmit}>
               <div className={styles.formVariant} key={role}>
-              {isPatient ? (
-                <>
-                  <div className={styles.row}>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>FIRST NAME</label>
-                      <input className={styles.input} placeholder="John" />
-                    </div>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>LAST NAME</label>
-                      <input className={styles.input} placeholder="Doe" />
-                    </div>
-                  </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>EMAIL ADDRESS</label>
+                  <input
+                    className={styles.input}
+                    type="email"
+                    placeholder={isPatient ? "john@example.com" : "dr.smith@hospital.com"}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>EMAIL ADDRESS</label>
-                    <input className={styles.input} placeholder="john@example.com" />
-                  </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>PASSWORD</label>
+                  <input
+                    className={styles.input}
+                    type="password"
+                    placeholder="••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>CREATE PASSWORD</label>
+                <div className={styles.optionsRow}>
+                  <label className={styles.checkboxLabel}>
                     <input
-                      className={styles.input}
-                      type="password"
-                      placeholder="••••••••••"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className={styles.checkbox}
                     />
-                  </div>
+                    <span>Remember me</span>
+                  </label>
+                  <a href="#forgot-password" className={styles.forgotPasswordLink}>
+                    Forgot Password?
+                  </a>
+                </div>
 
-                  <button className={styles.primaryButton} type="submit">
-                    Create Account →
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className={styles.row}>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>FULL NAME</label>
-                      <input className={styles.input} placeholder="Dr. Jane Smith" />
-                    </div>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>SPECIALTY</label>
-                      <input className={styles.input} placeholder="Cardiologist" />
-                    </div>
+                {error && (
+                  <div style={{ 
+                    color: '#ef4444', 
+                    fontSize: '14px', 
+                    marginBottom: '16px',
+                    padding: '12px',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.5)'
+                  }}>
+                    {error}
                   </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>WORK EMAIL</label>
-                    <input className={styles.input} placeholder="dr.smith@hospital.com" />
-                  </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>LICENSE / REGISTRATION ID</label>
-                    <input className={styles.input} placeholder="e.g. MED-123456" />
-                  </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>CREATE PASSWORD</label>
-                    <input
-                      className={styles.input}
-                      type="password"
-                      placeholder="••••••••••"
-                    />
-                  </div>
-
-                  <button className={styles.primaryButton} type="submit">
-                    Continue as Doctor →
-                  </button>
-                </>
-              )}
+                )}
+                <button className={styles.primaryButton} type="submit">
+                  Sign In →
+                </button>
               </div>
 
               <div className={styles.divider}>
@@ -152,24 +198,16 @@ const Login = () => {
               </div>
 
               <div className={styles.socialRow}>
-                <button className={styles.socialButton}>Google</button>
-                <button className={styles.socialButton}>Facebook</button>
+                <button type="button" className={styles.socialButton}>Google</button>
+                <button type="button" className={styles.socialButton}>Facebook</button>
               </div>
 
-              <p className={styles.termsText}>
-                By creating an account, you agree to our{' '}
-                <a href="#terms">Terms of Service</a> and{' '}
-                <a href="#privacy">Privacy Policy</a>, including Cookie Use.
-              </p>
-              <button
-                type="button"
+              <Link
+                to="/"
                 className={styles.backHomeLink}
-                onClick={() => {
-                  window.location.hash = '';
-                }}
               >
                 ← Back to Home
-              </button>
+              </Link>
             </form>
           </div>
         </div>
@@ -183,4 +221,3 @@ const Login = () => {
 };
 
 export default Login;
-

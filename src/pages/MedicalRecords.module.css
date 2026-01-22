@@ -1,0 +1,284 @@
+.container {
+  min-height: calc(100vh - 80px);
+  padding: 40px 80px 32px 80px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  animation: pageFadeIn 0.9s ease-out both;
+  background: radial-gradient(circle at 10% 20%, #2d3748 0, #1a202c 35%, #0f172a 100%);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 46px;
+  line-height: 1.2;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: #cbd5e0;
+}
+
+.recordsList {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.recordCard {
+  background: linear-gradient(150deg, rgba(30, 64, 175, 0.4), rgba(15, 23, 42, 0.9));
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 35px rgba(237, 137, 54, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.recordCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8), 0 0 35px rgba(237, 137, 54, 0.35);
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.recordDate {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.recordTime {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.statusBadge {
+  padding: 8px 20px;
+  background: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.recordBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #f6ad55;
+}
+
+.doctorInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.doctorImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.doctorName {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.specialty {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+}
+
+.hospital {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.section p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.diagnosis {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f0abfc;
+}
+
+.prescriptionList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prescriptionItem {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 4px solid #f0abfc;
+}
+
+.medicineName {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.medicineDetails {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.medicineDetails span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notes {
+  line-height: 1.8;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.recordActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.viewDoctorButton,
+.downloadButton {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  text-align: center;
+}
+
+.viewDoctorButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.viewDoctorButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.downloadButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+}
+
+.downloadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.emptyState p {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.emptySubtext {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 24px;
+}
+
+.bookLink {
+  display: inline-block;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: transform 0.3s ease;
+}
+
+.bookLink:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .recordCard {
+    padding: 20px;
+  }
+
+  .recordActions {
+    flex-direction: column;
+  }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
