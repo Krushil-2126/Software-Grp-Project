@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:gh-pages": "vite build --base=/software/",
+    "build:gh-pages": "vite build --base=/Software-Grp-Project/",
     "preview": "vite preview",
     "predeploy": "npm run build:gh-pages",
     "deploy": "gh-pages -d dist"
