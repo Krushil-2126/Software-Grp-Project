@@ -1,8 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/software/' : '/',
-  plugins: [react()],
-  publicDir: 'public',
+export default defineConfig(({ mode, command }) => {
+  // Determine base path:
+  // - For production builds (build command), use '/software/' for GitHub Pages
+  // - For development (dev command), use '/'
+  // - Can be overridden with --base flag
+  const base = command === 'build' ? '/software/' : '/';
+  
+  return {
+    base: base,
+    plugins: [react()],
+    publicDir: 'public',
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+    },
+  };
 })
