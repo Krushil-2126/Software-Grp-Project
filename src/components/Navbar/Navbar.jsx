@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './Navbar.module.css';
@@ -8,6 +8,19 @@ const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSidebarOpen]);
 
   const goToLogin = () => {
     navigate('/login', { state: { from: location } });
@@ -98,31 +111,109 @@ const Navbar = () => {
         </div>
         
         <div className={styles.sidebarLinks}>
-          <Link to="/" onClick={() => handleLinkClick('/')}>Home</Link>
-          <div onClick={() => handleLinkClick('/hospitals')} style={{ cursor: 'pointer' }}>Hospitals</div>
-          <div onClick={() => handleLinkClick('/doctor-locator')} style={{ cursor: 'pointer' }}>Find Doctors</div>
-          <div onClick={() => handleLinkClick('/medicine-ai')} style={{ cursor: 'pointer' }}>AI Medicine Suggestion</div>
-          <div onClick={() => handleLinkClick('/book-appointment')} style={{ cursor: 'pointer' }}>Book Appointment</div>
-          <div onClick={() => handleLinkClick('/emergency-services')} style={{ cursor: 'pointer' }}>🚨 Emergency Services</div>
-          <div onClick={() => handleLinkClick('/medicine-delivery')} style={{ cursor: 'pointer' }}>💊 Medicine Delivery</div>
+          <Link to="/" onClick={() => handleLinkClick('/')} className={styles.sidebarLink}>Home</Link>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/hospitals')} 
+            className={styles.sidebarLinkButton}
+          >
+            Hospitals
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/doctor-locator')} 
+            className={styles.sidebarLinkButton}
+          >
+            Find Doctors
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/medicine-ai')} 
+            className={styles.sidebarLinkButton}
+          >
+            AI Medicine Suggestion
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/book-appointment')} 
+            className={styles.sidebarLinkButton}
+          >
+            Book Appointment
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/emergency-services')} 
+            className={styles.sidebarLinkButton}
+          >
+            🚨 Emergency Services
+          </button>
+          <button 
+            type="button"
+            onClick={() => handleLinkClick('/medicine-delivery')} 
+            className={styles.sidebarLinkButton}
+          >
+            💊 Medicine Delivery
+          </button>
           {isAuthenticated && (
             <>
               {user?.role === 'patient' && (
                 <>
-                  <div onClick={() => handleLinkClick('/patient-dashboard')} style={{ cursor: 'pointer' }}>Patient Dashboard</div>
-                  <div onClick={() => handleLinkClick('/appointments')} style={{ cursor: 'pointer' }}>My Appointments</div>
-                  <div onClick={() => handleLinkClick('/medical-records')} style={{ cursor: 'pointer' }}>Medical Records</div>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/patient-dashboard')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    Patient Dashboard
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/appointments')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    My Appointments
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/medical-records')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    Medical Records
+                  </button>
                 </>
               )}
               {user?.role === 'doctor' && (
                 <>
-                  <div onClick={() => handleLinkClick('/doctor-dashboard')} style={{ cursor: 'pointer' }}>Doctor Dashboard</div>
-                  <div onClick={() => handleLinkClick('/doctor-availability')} style={{ cursor: 'pointer' }}>📅 Availability Heatmap</div>
-                  <div onClick={() => handleLinkClick('/appointments')} style={{ cursor: 'pointer' }}>My Appointments</div>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/doctor-dashboard')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    Doctor Dashboard
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/doctor-availability')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    📅 Availability Heatmap
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleLinkClick('/appointments')} 
+                    className={styles.sidebarLinkButton}
+                  >
+                    My Appointments
+                  </button>
                 </>
               )}
               {user?.role === 'admin' && (
-                <div onClick={() => handleLinkClick('/admin-dashboard')} style={{ cursor: 'pointer' }}>Admin Dashboard</div>
+                <button 
+                  type="button"
+                  onClick={() => handleLinkClick('/admin-dashboard')} 
+                  className={styles.sidebarLinkButton}
+                >
+                  Admin Dashboard
+                </button>
               )}
             </>
           )}
