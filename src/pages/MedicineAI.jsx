@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './MedicineAI.module.css';
+import { suggestMedicine } from '../utils/medicineAI';
 
 const MedicineAI = () => {
   const [symptoms, setSymptoms] = useState('');
@@ -18,43 +19,24 @@ const MedicineAI = () => {
     try {
       const allergyList = allergies.split(',').map(a => a.trim()).filter(a => a);
       
-      const response = await fetch('http://localhost:3000/api/medicine-suggestion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          symptoms,
-          age: age ? parseInt(age) : null,
-          allergies: allergyList,
-        }),
-      });
+      // Use client-side AI model
+      const data = await suggestMedicine(
+        symptoms,
+        age ? parseInt(age) : null,
+        allergyList
+      );
 
-      const data = await response.json();
-
-      if (data.success) {
-        setResults(data);
+      if (data.error) {
+        setError(data.error || 'Failed to get medicine suggestions');
       } else {
-        // Show detailed error message from server
-        const errorMsg = data.message || data.error || 'Failed to get medicine suggestions';
-        setError(errorMsg);
-        console.error('API Error:', data);
+        setResults({
+          success: true,
+          ...data
+        });
       }
     } catch (err) {
-      console.error('Error fetching medicine suggestions:', err);
-      console.error('Error details:', {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      });
-      
-      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('Network request failed')) {
-        setError('Failed to connect to the server. Please make sure the server is running on http://localhost:3000. Check the browser console for more details.');
-      } else if (err.message.includes('JSON')) {
-        setError('Server returned invalid response. Please check the server logs.');
-      } else {
-        setError(`Error: ${err.message}`);
-      }
+      console.error('Error getting medicine suggestions:', err);
+      setError(`Error: ${err.message || 'Failed to process your request. Please try again.'}`);
     } finally {
       setLoading(false);
     }

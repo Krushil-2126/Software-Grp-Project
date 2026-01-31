@@ -21,9 +21,18 @@ import MedicineDelivery from './pages/MedicineDelivery';
 import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
+  // Get base path from Vite config (matches vite.config.js)
+  const basename = import.meta.env.BASE_URL || '/';
+  
   return (
     <AuthProvider>
-      <BrowserRouter basename="/Software-Grp-Project">
+      <BrowserRouter 
+        basename={basename}
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <div className="app">
           <Navbar />
           <Routes>

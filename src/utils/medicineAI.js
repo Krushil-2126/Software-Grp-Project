@@ -1,101 +1,227 @@
-// AI Medicine Suggestion Logic
-import { medicineDatabase } from './mockData';
+// AI Medicine Suggestion Logic using Trained Model
+import { loadMedicineModel, getMedicineModel, isModelLoaded } from './medicineModelLoader';
+import { vectorizeQuery, precomputeDocumentVectors, cosineSimilarity } from './tfidf';
 
-export const suggestMedicine = (symptoms, age = null, allergies = []) => {
-  const suggestions = [];
-  const symptomLower = symptoms.toLowerCase();
+let modelLoaded = false;
+let documentVectors = null;
+
+/**
+ * Initialize the model (load and precompute vectors)
+ */
+async function initializeModel() {
+  if (modelLoaded && documentVectors) {
+    return true;
+  }
+
+  try {
+    const model = await loadMedicineModel();
+    documentVectors = precomputeDocumentVectors(model);
+    modelLoaded = true;
+    return true;
+  } catch (error) {
+    console.error('Failed to load medicine model:', error);
+    return false;
+  }
+}
+
+/**
+ * Extract symptoms from user input
+ */
+function extractSymptoms(symptomText) {
+  const symptomLower = symptomText.toLowerCase();
+  const symptoms = [];
   
-  // Simple keyword matching for symptom recognition
   const symptomKeywords = {
-    fever: ['fever', 'high temperature', 'hot', 'burning'],
-    headache: ['headache', 'head pain', 'migraine', 'head ache'],
+    fever: ['fever', 'high temperature', 'hot', 'burning', 'temperature'],
+    headache: ['headache', 'head pain', 'migraine', 'head ache', 'head'],
     cough: ['cough', 'coughing', 'dry cough', 'wet cough'],
-    cold: ['cold', 'runny nose', 'sneezing', 'nasal congestion'],
-    pain: ['pain', 'ache', 'sore', 'hurting'],
-    stomach: ['stomach', 'nausea', 'vomiting', 'indigestion', 'heartburn', 'abdominal'],
+    cold: ['cold', 'runny nose', 'sneezing', 'nasal congestion', 'congestion'],
+    pain: ['pain', 'ache', 'sore', 'hurting', 'discomfort'],
+    stomach: ['stomach', 'nausea', 'vomiting', 'indigestion', 'heartburn', 'abdominal', 'stomach pain'],
+    allergy: ['allergy', 'allergic', 'sneezing', 'runny nose', 'itching'],
+    infection: ['infection', 'bacterial', 'viral'],
+    anxiety: ['anxiety', 'stress', 'worried', 'nervous'],
+    insomnia: ['insomnia', 'sleepless', 'sleep', 'sleeping'],
   };
 
-  // Find matching symptoms
-  const matchedSymptoms = [];
-  for (const [key, keywords] of Object.entries(symptomKeywords)) {
+  for (const [symptom, keywords] of Object.entries(symptomKeywords)) {
     if (keywords.some(keyword => symptomLower.includes(keyword))) {
-      matchedSymptoms.push(key);
+      symptoms.push(symptom);
     }
   }
 
-  // Get medicine suggestions for matched symptoms
-  matchedSymptoms.forEach(symptom => {
-    const medicines = medicineDatabase[symptom] || [];
-    medicines.forEach(medicine => {
-      // Check for allergies
-      const medicineName = medicine.name.toLowerCase();
-      const hasAllergy = allergies.some(allergy => 
-        medicineName.includes(allergy.toLowerCase())
-      );
+  return symptoms;
+}
 
-      if (!hasAllergy) {
-        suggestions.push({
-          ...medicine,
-          symptom,
-          confidence: calculateConfidence(symptom, symptomLower),
-        });
-      }
-    });
+/**
+ * Check if medicine contains allergens
+ */
+function hasAllergen(medicine, allergies) {
+  if (!allergies || allergies.length === 0) {
+    return false;
+  }
+
+  const medicineText = `${medicine.name} ${medicine.composition}`.toLowerCase();
+  return allergies.some(allergy => 
+    medicineText.includes(allergy.toLowerCase())
+  );
+}
+
+/**
+ * Calculate confidence score with review ratings
+ */
+function calculateConfidence(similarity, medicine) {
+  // Base confidence from similarity (0-1)
+  let confidence = Math.min(1, Math.max(0, similarity));
+  
+  // Boost confidence based on review ratings
+  const excellentReview = medicine.excellent_review || 0;
+  const averageReview = medicine.average_review || 0;
+  const reviewScore = (excellentReview * 1.0 + averageReview * 0.5) / 100;
+  
+  // Combine similarity (70%) with review score (30%)
+  confidence = confidence * 0.7 + reviewScore * 0.3;
+  
+  return Math.min(0.95, confidence);
+}
+
+/**
+ * Main function to suggest medicines using AI model
+ */
+export const suggestMedicine = async (symptoms, age = null, allergies = []) => {
+  // Initialize model if not loaded
+  const modelReady = await initializeModel();
+  
+  if (!modelReady) {
+    // Fallback to basic response if model fails to load
+    return {
+      suggestions: [],
+      matchedSymptoms: [],
+      severityWarnings: [],
+      disclaimer: 'Model not available. Please consult a healthcare professional.',
+      error: 'Model failed to load'
+    };
+  }
+
+  const model = getMedicineModel();
+  if (!model || !documentVectors) {
+    return {
+      suggestions: [],
+      matchedSymptoms: [],
+      severityWarnings: [],
+      disclaimer: 'Model not available. Please consult a healthcare professional.',
+      error: 'Model not initialized'
+    };
+  }
+
+  // Extract symptoms for display
+  const matchedSymptoms = extractSymptoms(symptoms);
+
+  // Vectorize the query
+  const queryVector = vectorizeQuery(symptoms, model);
+  
+  if (!queryVector) {
+    return {
+      suggestions: [],
+      matchedSymptoms,
+      severityWarnings: [],
+      disclaimer: 'Unable to process query. Please try rephrasing your symptoms.',
+    };
+  }
+
+  // Calculate similarities
+  const similarities = documentVectors.map(({ medicine, vector }) => {
+    const similarity = cosineSimilarity(queryVector, vector);
+    return {
+      medicine,
+      similarity,
+      confidence: calculateConfidence(similarity, medicine)
+    };
   });
 
-  // If no specific match, suggest general pain relief
-  if (suggestions.length === 0 && symptomLower.includes('pain')) {
-    suggestions.push({
-      name: 'Paracetamol',
-      dosage: '500mg',
-      frequency: 'Every 6 hours',
-      duration: 'As needed',
-      precautions: 'Take with food. Consult doctor if pain persists.',
-      symptom: 'general',
-      confidence: 0.5,
-    });
-  }
+  // Filter out medicines with allergens
+  const filtered = similarities
+    .filter(({ medicine }) => !hasAllergen(medicine, allergies))
+    .filter(({ similarity }) => similarity > 0.01); // Only include relevant matches
 
   // Sort by confidence
-  suggestions.sort((a, b) => b.confidence - a.confidence);
+  filtered.sort((a, b) => b.confidence - a.confidence);
 
-  // Add severity warning for certain symptoms
-  const severityWarnings = [];
-  if (symptomLower.includes('high fever') || symptomLower.includes('fever above 103')) {
-    severityWarnings.push('High fever detected. Please consult a doctor immediately if fever persists for more than 3 days.');
-  }
-  if (symptomLower.includes('chest pain') || symptomLower.includes('difficulty breathing')) {
-    severityWarnings.push('Chest pain or breathing difficulties require immediate medical attention. Please visit emergency room.');
-  }
+  // Get top suggestions
+  const topSuggestions = filtered.slice(0, 5).map(({ medicine, confidence, similarity }) => ({
+    name: medicine.name,
+    composition: medicine.composition,
+    uses: medicine.uses,
+    side_effects: medicine.side_effects,
+    image_url: medicine.image_url,
+    manufacturer: medicine.manufacturer,
+    excellent_review: medicine.excellent_review,
+    average_review: medicine.average_review,
+    poor_review: medicine.poor_review,
+    confidence: confidence,
+    similarity: similarity,
+    // Format for display
+    dosage: extractDosage(medicine.composition),
+    frequency: 'As prescribed by doctor',
+    duration: 'As prescribed by doctor',
+    precautions: medicine.side_effects || 'Consult your doctor before use',
+  }));
+
+  // Generate severity warnings
+  const severityWarnings = generateSeverityWarnings(symptoms);
 
   return {
-    suggestions: suggestions.slice(0, 3), // Top 3 suggestions
+    suggestions: topSuggestions,
     matchedSymptoms,
     severityWarnings,
     disclaimer: 'These suggestions are for informational purposes only. Always consult a healthcare professional before taking any medication, especially if you have existing medical conditions or are taking other medications.',
   };
 };
 
-const calculateConfidence = (symptom, symptomText) => {
-  // Simple confidence calculation based on keyword matching
-  const keywords = {
-    fever: ['fever', 'temperature', 'hot'],
-    headache: ['headache', 'head', 'migraine'],
-    cough: ['cough', 'coughing'],
-    cold: ['cold', 'runny nose', 'congestion'],
-    pain: ['pain', 'ache', 'sore'],
-    stomach: ['stomach', 'nausea', 'vomiting'],
-  };
+/**
+ * Extract dosage from composition
+ */
+function extractDosage(composition) {
+  if (!composition) return 'As prescribed';
+  
+  // Try to extract dosage information
+  const dosageMatch = composition.match(/(\d+(?:\.\d+)?\s*(?:mg|g|ml|mcg|IU)\/?\d*(?:\s*(?:mg|g|ml|mcg|IU))?)/i);
+  if (dosageMatch) {
+    return dosageMatch[1];
+  }
+  
+  return 'As prescribed by doctor';
+}
 
-  const symptomKeywords = keywords[symptom] || [];
-  const matches = symptomKeywords.filter(keyword => 
-    symptomText.includes(keyword)
-  ).length;
+/**
+ * Generate severity warnings based on symptoms
+ */
+function generateSeverityWarnings(symptomText) {
+  const warnings = [];
+  const symptomLower = symptomText.toLowerCase();
 
-  return Math.min(0.9, 0.5 + (matches * 0.15));
-};
+  if (symptomLower.includes('chest pain') || symptomLower.includes('difficulty breathing')) {
+    warnings.push('Chest pain or breathing difficulties require immediate medical attention. Please visit emergency room.');
+  }
+  
+  if (symptomLower.includes('high fever') || symptomLower.includes('fever above 103')) {
+    warnings.push('High fever detected. Please consult a doctor immediately if fever persists for more than 3 days.');
+  }
+  
+  if (symptomLower.includes('severe') && (symptomLower.includes('pain') || symptomLower.includes('bleeding'))) {
+    warnings.push('Severe symptoms detected. Please seek immediate medical attention.');
+  }
+  
+  if (symptomLower.includes('unconscious') || symptomLower.includes('fainting')) {
+    warnings.push('Loss of consciousness requires immediate emergency medical care. Call emergency services.');
+  }
 
-// Additional helper function for symptom analysis
+  return warnings;
+}
+
+/**
+ * Analyze symptoms for urgency (kept from original)
+ */
 export const analyzeSymptoms = (symptoms) => {
   const symptomText = symptoms.toLowerCase();
   const analysis = {
